@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 
 π = np.pi
 
+#λ must be in micron.
+
 #########################################################################################
-#    Sellmeier equations for real part of the material's refractive indices                #
+#    Sellmeier equations for real part of the material's refractive indices             #
 #########################################################################################
 
 def n_sellmeier(λ,A,B,C):
@@ -24,8 +26,8 @@ def material_nk_fnLN(λ, ray):
     '''
     cLN's ordinary and extraordinary refractive index (Zelmon 1997). 
     another ref. in Handbook of optical materials, much older (1972)
+    Lambda in micron.
     '''
-    λ = λ*1e-3
     A = 1
 
     B_ordinary      = [2.6734,  1.2290,  12.614]
@@ -50,12 +52,13 @@ def material_nk_fnLN(λ, ray):
 def material_nk_fnLNt(λ, temp, cLi, ray):
     '''
     LN's ordinary and extraordinary refractive index as a function of temperature (in °C) and Li composition in % 
-    (Schlarb & Betzler 1994).
-    https://journals.aps.org/prb/pdf/10.1103/PhysRevB.48.15613
+    (Schlarb & Betzler 1994, https://journals.aps.org/prb/pdf/10.1103/PhysRevB.48.15613)
+    Lambda in nm.
     '''
-
-    #f(T)-f(T_0) where T_0 is 24.5 °C
-    f = (temp + 273)**2 + 4.0238e5*(1./tanh( 261.6/( temp + 273 ) ) - 1) - (24.5 + 273)**2 - 4.0238e5*(1./tanh( 261.6/( 24.5 + 273 ) ) - 1)     
+    λ = λ*1e3
+    
+    #f = f(T)-f(T_0) where T_0 is 24.5 °C
+    f = (temp + 273)**2 + 4.0238e5*(1./np.tanh( 261.6/( temp + 273 ) ) - 1) - (24.5 + 273)**2 - 4.0238e5*(1./np.tanh( 261.6/( 24.5 + 273 ) ) - 1)     
     o = [4.5312e-5, 223.219, 2.7322e-5, 260.26, 3.6340e-8, 2.6613, 2.1203e-6, -1.827e-4]
     e = [3.9466e-5, 218.203, 8.3140e-5, 250.847, 3.0998e-8, 2.6613, 7.5187e-6, -3.8043e-5]
 
@@ -66,16 +69,15 @@ def material_nk_fnLNt(λ, temp, cLi, ray):
     else:
         raise Exception('Ray polarization must be Ordinary(\'o\') or Extraordinary (\'e\')')
 
-    return sqrt((50+cLi)/100. * a[0]/( 1./( a[1] + a[6]*f )**(2) - 1./lamb ) + (50-cLi)/100.  * a[2]/( 1./( a[3] + a[7]*f )**(2) - 1./lamb ) - a[4]*lamb + a[5] )
+    return np.sqrt((50.+cLi)/100. * a[0]/( 1./( a[1] + a[6]*f )**(2) - 1./λ**(2) ) + (50.-cLi)/100.  * a[2]/( 1./( a[3] + a[7]*f )**(2) - 1./λ**(2) ) - a[4]*λ**(2) + a[5] )
 
 
 
 def material_nk_fnGaN(λ, ray):
     '''
-    GaN's refractive index. Lambda in microm
+    GaN's refractive index. Lambda in micron
     ref. Handbook of optical materials (refractiveindex.info)
     '''
-    λ = λ*1e-3
       
     A_ordinary      = 3.6   
     B_ordinary      = [    1.75,      4.1]
@@ -102,10 +104,9 @@ def material_nk_fnGaN(λ, ray):
 
 def material_nk_fnAl2O3(λ, ray):
     '''
-    Sapphire's refractive index. Lambda in micron
+    Sapphire's refractive index. Lambda in micron.
     ref. Handbook of optical materials (refractiveindex.info)
     '''
-    λ = λ*1e-3
     A = 1
 
     B_ordinary      = [   1.4313493,   0.65054713,    5.3414021]
@@ -128,39 +129,111 @@ def material_nk_fnAl2O3(λ, ray):
 
 
 #########################################################################################
-#    Computation of asborption coefficients from various models                            #
+#    Computation of asborption coefficients from various models                         #
 #########################################################################################
 
 def absorption(λ, alpha0, E0, Eu):
     '''
     INPUT: alpha0 and E0 are the Urbach parameters for the model, obtained from temperature dependent absorption measurements 
-    (see Chichibu et a. 1997). Eu is the Urbach energy for the model. Lambda must be expressed in micron
+    (see Chichibu et a. 1997). Eu is the Urbach energy for the model. Lambda must be expressed in micron.
     DETAILS OF THE MODEL: single Urbach tail
     '''
-    λ = λ*1e-3
     E = 0.4135667662 * 2.99 / λ 
     
-    return alpha0 * np.exp((E - E0)/Eu)  
+    return alpha0 * np.exp((E - E0)/Eu)
+
+
+def absorption_gauss(λ, EV, lambdaV, sigmaV, alphaV):
+    '''
+    INPUT: EV is an array containing various energies (Urbach energy, the E0 energy for the Urbach model).
+    Similarly lambdaV contains wavelengths for the centering of Gaussian models of absorption,
+    sigmaV for the width of such Gaussian curves and alphaV the constant absorption coefficients often used in such models.
+    
+    DETAILS OF THE MODEL: double Urbach tail with up to two possible Gaussian absorption curves (i.e. for simulating
+    absorption related to impurity centers; for example Fe subsitutional impurity for Li)
+    (not used in the final simulations)
+    
+    Lambda in micron
+    Urbach and the other energies are in meV
+
+    h = 4.135667662e-15 #eV s
+    c = 2.99  #e8 ms^-1
+    nu = c*1e14/λ
+    '''
+
+    E = 0.4135667662 * 2.99 / λ
+    
+    Eu = EV[0]
+    E0 = EV[1]
+    Eu2 = EV[2]
+
+    #lambda_fe = 0.531
+    #lambda_fe = 0.58
+    #sigma = 0.090
+
+    lambda_fe = lambdaV[0]
+    sigma_fe = sigmaV[0]
+
+    lambda2 = lambdaV[1]
+    sigma2 = sigmaV[1]
+
+    alpha0 = alphaV[0]
+    alpha1 = alphaV[1]
+    alpha2 = alphaV[2]
+    alpha3 = alphaV[3]
+
+
+    alpha_exp = alpha0 * np.exp((E - E0) / (Eu))
+    alpha_exp2 = alpha3 * np.exp((E - E0) / (Eu2))
+    alpha_gauss1 = alpha1 * (1 / (sigma_fe * np.sqrt(2) * π)) * np.exp(-(λ - lambda_fe)**2 / (2 * sigma_fe**2))
+    alpha_gauss2 = alpha2 * (1 / (sigma2 * np.sqrt(2) * π)) * np.exp(-(λ - lambda2)**2 / (2 * sigma_fe**2))
+
+
+    alpha = alpha_exp + alpha_exp2 + alpha_gauss1 + alpha_gauss2
+
+    return alpha
+    
+  
+    
+def absorption_other(λ, alpha0, lambda0, w0):
+        
+    return alpha0 * np.exp(-(λ - lambda0)**2 / (2*w0)**2)  
 
 
 
 #########################################################################################################
-#    Computation of the imaginary part of the refractive index from the absorption coefficient            #
+#    Computation of the imaginary part of the refractive index from the absorption coefficient          #
 #########################################################################################################
 
 def make_k(λ, alpha0, E0, Eu):
     '''
     INPUT: alpha0 and E0 are the Urbach parameters for the model, obtained from temperature dependent absorption measurements 
-    (see Chichibu et a. 1997). Eu is the Urbach energy for the model. Lambda must be expressed in micron
+    (see Chichibu et a. 1997). Eu is the Urbach energy for the model. Lambda must be expressed in micron.
     DETAILS OF THE MODEL: single Urbach tail
     '''
     a = absorption(λ, alpha0, E0, Eu)
        
-    return a * λ / (4 * π)     
+    return a * λ / (4 * π) 
+
+
+def make_k_gauss(λ, EV, lambdaV, sigmaV, alphaV):
+    
+    a = absorption_gauss(λ, EV, lambdaV, sigmaV, alphaV)
+    
+    return a * λ / (4 * π)
+
+    
+    
+def make_k_other(λ, alpha0, lambda0, w0):
+     
+    a = absorption_other(λ, alpha0, lambda0, w0)
+       
+    return a * λ / (4 * π)    
+
     
 
 #################################################
-#    Transfer Matrix Method routines                #
+#    Transfer Matrix Method routines            #
 #################################################    
     
 #model of a 2x2 matrix as a 2D array (from TMM package in pip)      
@@ -182,8 +255,8 @@ def make_2x2_array(a, b, c, d, dtype=float):
 
 def fresnel_r(n_i,n_f,th):
     
-    th_i = np.sinh(1. / n_i * np.sin (th))
-    th_f = np.sinh(1. / n_f * np.sin (th))
+    th_i = np.sinh(1. / n_i * np.sin(th))
+    th_f = np.sinh(1. / n_f * np.sin(th))
     
     return (n_i * np.cos(th_i) - n_f * np.cos(th_f))/(n_i * np.cos(th_i) + n_f * np.cos(th_f))        #s polarization
     #return (n_i * cos(th_f) - n_f * cos(th_i))/(n_i * cos(th_f) + n_f * cos(th_i))       #p polarization
@@ -191,8 +264,8 @@ def fresnel_r(n_i,n_f,th):
     
 def fresnel_t(n_i,n_f,th):
     
-    th_i = np.sinh(1. / n_i * np.sin (th))
-    th_f = np.sinh(1. / n_f * np.sin (th))
+    th_i = np.sinh(1. / n_i * np.sin(th))
+    th_f = np.sinh(1. / n_f * np.sin(th))
 
     return 2 * n_i * np.cos(th_i)/(n_i * np.cos(th_i) + n_f * np.cos(th_f))     #s polarization
     #return 2 * n_i * cos(th_i)/(n_i * cos(th_f) + n_f * cos(th_i))    #p polarization
@@ -201,31 +274,62 @@ def fresnel_t(n_i,n_f,th):
 #computation of the reflectivity/transmittivity reduction due to the interface roughness (see Katsidis)
 #eq. 10 Katsidis
 def rho(λ, z, n_i):
+        
     return np.exp(-2 * (2*π*z * n_i / λ)**2 )
 
 
 
 def tau(λ, z, n_i, n_f):
+
     return np.exp(-1./2 * (2*π*z * (n_f-n_i) / λ)**2 )
+
+
+#computation of the transfer matrices for the interface and layer propagation, generic case (partial coherence due to interface roughness)
+def make_layer_matr(λ, n_i, n_f, th, d, z):
+
+    #eq 21 Katsidis
+    
+    #computation of the damping coefficients due to interface roughness (fw for forward propagating, bw for backward propagating)
+    rho_fw  = rho(λ, z, n_i)
+    rho_bw  = rho(λ, z, n_f)
+    tau_fw  = tau(λ, z, n_i, n_f)
+
+    th_i = np.sinh(1. / n_i * np.sin(th))
+    th_f = np.sinh(1. / n_f * np.sin(th))
+
+    #computation of the Fresnel coefficients at the interface, forward (m-1,m) and backwards (m,m-1)
+    t_fw  = fresnel_t(n_i,n_f,th_i,th_f) * tau_fw
+    t_bw  = fresnel_t(n_f,n_i,th_f,th_i) * tau_fw
+    r_fw  = fresnel_r(n_i,n_f,th_i,th_f) * rho_fw
+    r_bw  = fresnel_r(n_f,n_i,th_f,th_i) * rho_bw
+    
+    #computation of the coefficients due to the crossing of the layer
+    p = 2 * pi /λ * n_i * d
+    lay1 = np.exp( -1j*p)
+    lay2 = np.exp( 1j*p)   
+    
+    return (1./t_fw) * make_2x2_array(lay1, -r_bw*lay1, r_fw*lay2, (t_fw*t_bw - r_fw*r_bw) * lay2, dtype=complex)
 
 
 #computation of the transfer matrices for the interface and layer propagation, starting from transfer matrices computed elsewhere
 def T_inc(λ, T0m, TmN, n_f, d, th):
 
-    #implemento eq 16
+    #eq 16
     t0m = 1./T0m[0,0]
     tmN = 1./TmN[0,0]
     rm0 = -T0m[0,1]/T0m[0,0]
     rmN = TmN[1,0]/T0m[0,0]
 
-    th_f = sinh(1. / n_f * sin (th))    
-    arg = 2 * pi /λ * n_f * d * cos(th_f)
+    #from eq 14 to eq 16 (katsidis)
+    th_f = np.sinh(1. / n_f * np.sin (th))    
+    arg = 2 * π / λ * n_f * d * np.cos(th_f)
     
-    return abs(t0m)**2 * abs(tmN)**2 / (abs(exp(1j*arg))**2 - abs(rm0*rmN)**2 * abs(exp(-1j*arg))**2 )
+    return abs(t0m)**2 * abs(tmN)**2 / (abs(np.exp(1j*arg))**2 - abs(rm0*rmN)**2 * abs(np.exp(-1j*arg))**2 )
 
 
 #computation of the transmission matrix for an interface. Basic approach       
 def make_T_int(λ, n_i, n_f, th, z):
+
     Tmix  = fresnel_r(n_i,n_f,th) * rho(λ, z, n_i)
     Tmix2 = fresnel_t(n_i,n_f,th) * tau(λ, z, n_i, n_f)
     
@@ -234,7 +338,8 @@ def make_T_int(λ, n_i, n_f, th, z):
 
                    
 #computation of the transmission matrix for a layer. Basic approach      
-def make_T_lay(λ, n, d, th):  
+def make_T_lay(λ, n, d, th):
+
     th_f  = np.sinh(1. / n * np.sin (th))
     p     = 2 * π /λ * n * d * np.cos(th_f)
     Tmix  = np.exp(-1j*p)
