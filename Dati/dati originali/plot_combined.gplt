@@ -1,0 +1,40 @@
+#plot degli spettri dei tre campioni, sovrapposti
+
+FILENAME1="7.1_originale.txt"
+FILENAME2="7.2_originale.txt"
+FILENAME3="7.3_originale.txt"
+
+LEGEND = "7.1 7.2 7.3"
+
+set xrange[350:1000]
+set yrange[50:100]
+
+set xlabel "$\lambda (\micro m)$"
+set ylabel "T %"
+
+set terminal qt 1
+plot FILENAME1 using 1:2 with l title word(LEGEND, 1),\
+	#FILENAME2 using 1:2 with l title word(LEGEND, 2),\
+	#FILENAME3 using 1:2 with l title word(LEGEND, 3),\
+		
+set terminal postscript portrait enhanced color dashed lw 1 "DejaVuSans" 12
+set output "plot_combined1.ps"
+replot
+
+set xrange[1000:2500]
+set yrange[50:100]
+
+set xlabel "$\lambda (\micro m)$"
+set ylabel "T %"
+
+set terminal qt 2
+plot FILENAME1 using 1:2 with l title word(LEGEND, 1),\
+	FILENAME2 using 1:2 with l title word(LEGEND, 2),\
+	FILENAME3 using 1:2 with l title word(LEGEND, 3),\
+		
+set terminal postscript portrait enhanced color dashed lw 1 "DejaVuSans" 12
+set output "plot_combined2.ps"
+replot
+	
+
+pause -1
