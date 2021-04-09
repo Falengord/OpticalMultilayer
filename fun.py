@@ -304,11 +304,11 @@ def make_layer_matr(λ, n_i, n_f, th, d, z):
     r_bw  = fresnel_r(n_f,n_i,th_f,th_i) * rho_bw
     
     #computation of the coefficients due to the crossing of the layer
-    p = 2 * pi /λ * n_i * d
+    p = 2 * π /λ * n_i * d
     lay1 = np.exp( -1j*p)
     lay2 = np.exp( 1j*p)   
     
-    return (1./t_fw) * make_2x2_array(lay1, -r_bw*lay1, r_fw*lay2, (t_fw*t_bw - r_fw*r_bw) * lay2, dtype=complex)
+    return (1./t_fw) * np.array([lay1, -r_bw*lay1], [r_fw*lay2, (t_fw*t_bw - r_fw*r_bw) * lay2], dtype=complex)
 
 
 #computation of the transfer matrices for the interface and layer propagation, starting from transfer matrices computed elsewhere

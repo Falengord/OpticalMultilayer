@@ -27,7 +27,8 @@ z_4 = 0
 
 
 # list of layer thicknesses in micron
-d_LN = 0.23
+#d_LN = 0.23
+d_LN = 0.1
 d_GaN = 5.57
 d_Al2O3 = 500
 
