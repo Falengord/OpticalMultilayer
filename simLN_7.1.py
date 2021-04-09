@@ -67,7 +67,7 @@ for λ in lambda_list:
 
     nreLN = material_nk_fnLN(λ,'o')
     nimLN = make_k(λ, alpha0_LN, E0_LN, Eu_LN)
-    nreLNt = material_nk_fnLNt(λ,24.5,cLi,'o')
+    nreLNt = material_nk_fnLNt(λ, 24.5, cLi, 'o')
 
     n_LNt = nreLNt + 1j * nimLN 
     n_LN = nreLN + 1j * nimLN    
