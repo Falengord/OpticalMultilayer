@@ -163,8 +163,8 @@ def absorption_gauss(λ, EV, lambdaV, sigmaV, alphaV):
 
     E = 0.4135667662 * 2.99 / λ
     
-    Eu = EV[0]
-    E0 = EV[1]
+    Eu  = EV[0]
+    E0  = EV[1]
     Eu2 = EV[2]
 
     #lambda_fe = 0.531
@@ -172,10 +172,10 @@ def absorption_gauss(λ, EV, lambdaV, sigmaV, alphaV):
     #sigma = 0.090
 
     lambda_fe = lambdaV[0]
-    sigma_fe = sigmaV[0]
+    sigma_fe  = sigmaV[0]
 
     lambda2 = lambdaV[1]
-    sigma2 = sigmaV[1]
+    sigma2  = sigmaV[1]
 
     alpha0 = alphaV[0]
     alpha1 = alphaV[1]
@@ -183,8 +183,8 @@ def absorption_gauss(λ, EV, lambdaV, sigmaV, alphaV):
     alpha3 = alphaV[3]
 
 
-    alpha_exp = alpha0 * np.exp((E - E0) / (Eu))
-    alpha_exp2 = alpha3 * np.exp((E - E0) / (Eu2))
+    alpha_exp    = alpha0 * np.exp((E - E0) / (Eu))
+    alpha_exp2   = alpha3 * np.exp((E - E0) / (Eu2))
     alpha_gauss1 = alpha1 * (1 / (sigma_fe * np.sqrt(2) * π)) * np.exp(-(λ - lambda_fe)**2 / (2 * sigma_fe**2))
     alpha_gauss2 = alpha2 * (1 / (sigma2 * np.sqrt(2) * π)) * np.exp(-(λ - lambda2)**2 / (2 * sigma_fe**2))
 
@@ -261,12 +261,12 @@ def fresnel_r(n_i,n_f,th,polarization='s'):
     if polarization == 's':
         return (n_i * np.cos(th_i) - n_f * np.cos(th_f))/(n_i * np.cos(th_i) + n_f * np.cos(th_f))        #s polarization
     elif polarization == 'p':
-        return (n_i * cos(th_f) - n_f * cos(th_i))/(n_i * cos(th_f) + n_f * cos(th_i))       #p polarization
+        return (n_i * np.cos(th_f) - n_f * np.cos(th_i))/(n_i * np.cos(th_f) + n_f * np.cos(th_i))        #p polarization
     else:
         raise Exception('Invalid polarization')
    
     
-def fresnel_t(n_i,n_f,th,polarization):
+def fresnel_t(n_i,n_f,th,polarization='s'):
     
     th_i = np.arcsin(np.sin(th)/n_i)
     th_f = np.arcsin(np.sin(th)/n_f)
@@ -274,7 +274,7 @@ def fresnel_t(n_i,n_f,th,polarization):
     if polarization == 's':
         return 2 * n_i * np.cos(th_i)/(n_i * np.cos(th_i) + n_f * np.cos(th_f))     #s polarization
     elif polarization == 'p':
-        return 2 * n_i * cos(th_i)/(n_i * cos(th_f) + n_f * cos(th_i))    #p polarization
+        return 2 * n_i * np.cos(th_i)/(n_i * np.cos(th_f) + n_f * np.cos(th_i))     #p polarization
     else:
         raise Exception('Invalid polarization')
                 
@@ -306,13 +306,13 @@ def make_layer_matr(λ, n_i, n_f, th, d, z):
     th_f = np.arcsin(1. / n_f * np.sin(th))
 
     #computation of the Fresnel coefficients at the interface, forward (m-1,m) and backwards (m,m-1)
-    t_fw  = fresnel_t(n_i,n_f,th_i,th_f) * tau_fw
-    t_bw  = fresnel_t(n_f,n_i,th_f,th_i) * tau_fw
-    r_fw  = fresnel_r(n_i,n_f,th_i,th_f) * rho_fw
-    r_bw  = fresnel_r(n_f,n_i,th_f,th_i) * rho_bw
+    t_fw  = fresnel_t(n_i,n_f,th) * tau_fw
+    t_bw  = fresnel_t(n_f,n_i,th) * tau_fw
+    r_fw  = fresnel_r(n_i,n_f,th) * rho_fw
+    r_bw  = fresnel_r(n_f,n_i,th) * rho_bw
     
     #computation of the coefficients due to the crossing of the layer
-    p = 2 * π /λ * n_i * d
+    p    = 2 * π /λ * n_i * d
     lay1 = np.exp( -1j*p)
     lay2 = np.exp( 1j*p)   
     
@@ -330,7 +330,7 @@ def T_inc(λ, T0m, TmN, n_f, d, th):
 
     #from eq 14 to eq 16 (katsidis)
     th_f = np.arcsin(1. / n_f * np.sin (th))    
-    arg = 2 * π / λ * n_f * d * np.cos(th_f)
+    arg  = 2 * π / λ * n_f * d * np.cos(th_f)
     
     return abs(t0m)**2 * abs(tmN)**2 / (abs(np.exp(1j*arg))**2 - abs(rm0*rmN)**2 * abs(np.exp(-1j*arg))**2 )
 
