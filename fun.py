@@ -253,22 +253,30 @@ def make_2x2_array(a, b, c, d, dtype=float):
       
 #computation of the Fresnel coefficients (reflection, transmission) for the interface (s polarization)
 
-def fresnel_r(n_i,n_f,th):
+def fresnel_r(n_i,n_f,th,polarization='s'):
     
-    th_i = np.sinh(1. / n_i * np.sin(th))
-    th_f = np.sinh(1. / n_f * np.sin(th))
+    th_i = np.arcsin(np.sin(th)/n_i)
+    th_f = np.arcsin(np.sin(th)/n_f)
     
-    return (n_i * np.cos(th_i) - n_f * np.cos(th_f))/(n_i * np.cos(th_i) + n_f * np.cos(th_f))        #s polarization
-    #return (n_i * cos(th_f) - n_f * cos(th_i))/(n_i * cos(th_f) + n_f * cos(th_i))       #p polarization
+    if polarization == 's':
+        return (n_i * np.cos(th_i) - n_f * np.cos(th_f))/(n_i * np.cos(th_i) + n_f * np.cos(th_f))        #s polarization
+    elif polarization == 'p':
+        return (n_i * cos(th_f) - n_f * cos(th_i))/(n_i * cos(th_f) + n_f * cos(th_i))       #p polarization
+    else:
+        raise Exception('Invalid polarization')
    
     
-def fresnel_t(n_i,n_f,th):
+def fresnel_t(n_i,n_f,th,polarization):
     
-    th_i = np.sinh(1. / n_i * np.sin(th))
-    th_f = np.sinh(1. / n_f * np.sin(th))
+    th_i = np.arcsin(np.sin(th)/n_i)
+    th_f = np.arcsin(np.sin(th)/n_f)
 
-    return 2 * n_i * np.cos(th_i)/(n_i * np.cos(th_i) + n_f * np.cos(th_f))     #s polarization
-    #return 2 * n_i * cos(th_i)/(n_i * cos(th_f) + n_f * cos(th_i))    #p polarization
+    if polarization == 's':
+        return 2 * n_i * np.cos(th_i)/(n_i * np.cos(th_i) + n_f * np.cos(th_f))     #s polarization
+    elif polarization == 'p':
+        return 2 * n_i * cos(th_i)/(n_i * cos(th_f) + n_f * cos(th_i))    #p polarization
+    else:
+        raise Exception('Invalid polarization')
                 
                                
 #computation of the reflectivity/transmittivity reduction due to the interface roughness (see Katsidis)
@@ -294,8 +302,8 @@ def make_layer_matr(λ, n_i, n_f, th, d, z):
     rho_bw  = rho(λ, z, n_f)
     tau_fw  = tau(λ, z, n_i, n_f)
 
-    th_i = np.sinh(1. / n_i * np.sin(th))
-    th_f = np.sinh(1. / n_f * np.sin(th))
+    th_i = np.arcsin(1. / n_i * np.sin(th))
+    th_f = np.arcsin(1. / n_f * np.sin(th))
 
     #computation of the Fresnel coefficients at the interface, forward (m-1,m) and backwards (m,m-1)
     t_fw  = fresnel_t(n_i,n_f,th_i,th_f) * tau_fw
@@ -321,7 +329,7 @@ def T_inc(λ, T0m, TmN, n_f, d, th):
     rmN = TmN[1,0]/T0m[0,0]
 
     #from eq 14 to eq 16 (katsidis)
-    th_f = np.sinh(1. / n_f * np.sin (th))    
+    th_f = np.arcsin(1. / n_f * np.sin (th))    
     arg = 2 * π / λ * n_f * d * np.cos(th_f)
     
     return abs(t0m)**2 * abs(tmN)**2 / (abs(np.exp(1j*arg))**2 - abs(rm0*rmN)**2 * abs(np.exp(-1j*arg))**2 )
@@ -340,7 +348,7 @@ def make_T_int(λ, n_i, n_f, th, z):
 #computation of the transmission matrix for a layer. Basic approach      
 def make_T_lay(λ, n, d, th):
 
-    th_f  = np.sinh(1. / n * np.sin (th))
+    th_f  = np.arcsin(1. / n * np.sin (th))
     p     = 2 * π /λ * n * d * np.cos(th_f)
     Tmix  = np.exp(-1j*p)
     Tmix2 = np.exp(1j*p)
