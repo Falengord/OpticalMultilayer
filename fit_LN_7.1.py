@@ -22,7 +22,7 @@ z_1 = 0
 z_2 = 0
 z_4 = 0
 
-# list of layer thicknesses in micron
+#list of layer thicknesses in micron
 d_GaN   = 5.57
 d_Al2O3 = 500
 
@@ -35,7 +35,7 @@ Eu_LN = 0.150  #in eV
 E0_LN = 4.502  #in eV
 alpha0_LN = 3e3
 
-#angles of incidence on the layers
+#angle of incidence on the first layer
 th = 0 * π/180
 
 #load the measurement datafile to compare it with the simulation
