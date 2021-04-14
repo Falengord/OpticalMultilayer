@@ -322,14 +322,18 @@ def make_layer_matr(λ, n_i, n_f, th, d, z):
 #computation of the transfer matrices for the interface and layer propagation, starting from transfer matrices computed elsewhere
 def T_inc(λ, T0m, TmN, n_f, d, th):
 
+    dim = np.shape(λ)
+    if dim == ():
+        dim = 1
+
     #eq 16
-    t0m = 1./T0m[0,0]
-    tmN = 1./TmN[0,0]
+    t0m = np.ones(dim)/T0m[0,0]
+    tmN = np.ones(dim)/TmN[0,0]
     rm0 = -T0m[0,1]/T0m[0,0]
     rmN = TmN[1,0]/T0m[0,0]
 
     #from eq 14 to eq 16 (katsidis)
-    th_f = np.arcsin(1. / n_f * np.sin (th))    
+    th_f = np.arcsin(np.ones(dim) / n_f * np.sin (th))    
     arg  = 2 * π / λ * n_f * d * np.cos(th_f)
     
     return abs(t0m)**2 * abs(tmN)**2 / (abs(np.exp(1j*arg))**2 - abs(rm0*rmN)**2 * abs(np.exp(-1j*arg))**2 )
@@ -338,19 +342,29 @@ def T_inc(λ, T0m, TmN, n_f, d, th):
 #computation of the transmission matrix for an interface. Basic approach       
 def make_T_int(λ, n_i, n_f, th, z):
 
+    dim = np.shape(λ)
+    if dim == ():
+        dim = 1
+
     Tmix  = fresnel_r(n_i,n_f,th) * rho(λ, z, n_i)
     Tmix2 = fresnel_t(n_i,n_f,th) * tau(λ, z, n_i, n_f)
+    T_int = [[np.ones(dim), Tmix], [Tmix, np.ones(dim)]]
     
-    return (1./Tmix2) * np.array([[1, Tmix], [Tmix, 1]], dtype=complex)
+    return np.array(T_int/Tmix2, dtype=complex)
 
 
                    
 #computation of the transmission matrix for a layer. Basic approach      
 def make_T_lay(λ, n, d, th):
 
+    dim = np.shape(λ)
+    if dim == (): 
+        dim = 1
+
     th_f  = np.arcsin(1. / n * np.sin (th))
     p     = 2 * π /λ * n * d * np.cos(th_f)
     Tmix  = np.exp(-1j*p)
     Tmix2 = np.exp(1j*p)
-        
-    return np.array([[Tmix, 0], [0, Tmix2]], dtype=complex)
+    T_lay = [[Tmix, np.zeros(dim)], [np.ones(dim), Tmix2]]
+
+    return np.array(T_lay, dtype=complex)
