@@ -1,10 +1,10 @@
 #IMPORT LIBRARIES
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
- 
-from fun import material_nk_fnLN, material_nk_fnLNt, material_nk_fnGaN, material_nk_fnAl2O3, make_k, make_T_int, make_T_lay, T_inc
+from fun import *
 
 π = np.pi
 
@@ -75,6 +75,13 @@ def func(λ,d_LN,z_3):
 
     return T_inc(xdata, temp, T41, n_Al2O3, d_Al2O3, th) 
 
+
+
+#### Set seaborn ####
+sns.set_theme()
+sns.set_style("darkgrid")
+
+
 popt, pcov = curve_fit(func, xdata, ydata, p0 = [0.23, 0.0151])
 popt
 
@@ -94,4 +101,3 @@ d = np.array([xdata,fit]).T
 np.savetxt('simLN_7.1.txt', d, fmt='%10.5f', newline='\n')
 
 chisquare(fit, ydata)
-

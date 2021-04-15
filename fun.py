@@ -342,14 +342,13 @@ def T_inc(λ, T0m, TmN, n_f, d, th):
 #computation of the transmission matrix for an interface. Basic approach       
 def make_T_int(λ, n_i, n_f, th, z):
 
+    dim = np.shape(λ)
+    if dim == (): 
+        dim = 1
 
     Tmix  = fresnel_r(n_i,n_f,th) * rho(λ, z, n_i)
     Tmix2 = fresnel_t(n_i,n_f,th) * tau(λ, z, n_i, n_f)
-    dim = np.shape(λ)
-    if dim == ():
-        T_int = [[1, Tmix], [Tmix, 1]]
-    else:
-        T_int = [[np.ones(dim), Tmix], [Tmix, np.ones(dim)]]
+    T_int = [[np.ones(dim), Tmix], [Tmix, np.ones(dim)]]
     
     return np.array(T_int/Tmix2, dtype=complex)
 
