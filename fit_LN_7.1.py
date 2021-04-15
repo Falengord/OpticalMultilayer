@@ -46,41 +46,37 @@ ydata = y*1e-2
 
 
 #execute the various operations for each wavelength
-def func(x,d_LN,z_3):
+def func(λ,d_LN,z_3):
     
-    #initialization of T matrix
-    Tinc = []
+    #compute the refractive indeces of the various materials
+    nreGaN = material_nk_fnGaN(λ, 'o') 
+    nreLN  = material_nk_fnLN(λ, 'o')
+    nimGaN = make_k(λ, alpha0_GaN, E0_GaN, Eu_GaN) 
+    nimLN  = make_k(λ, alpha0_LN, E0_LN, Eu_LN)
     
-    for λ in x:
-
-        #compute the refractive indeces of the various materials
-        nreGaN = material_nk_fnGaN(λ, 'o') 
-        nreLN  = material_nk_fnLN(λ, 'o')
-        nimGaN = make_k(λ, alpha0_GaN, E0_GaN, Eu_GaN) 
-        nimLN  = make_k(λ, alpha0_LN, E0_LN, Eu_LN)
-    
-        n_LN    = nreLN + 1j * nimLN   
-        n_GaN   = nreGaN + 1j * nimGaN
-        n_Al2O3 = material_nk_fnAl2O3(λ, 'o')
+    n_LN    = nreLN + 1j * nimLN   
+    n_GaN   = nreGaN + 1j * nimGaN
+    n_Al2O3 = material_nk_fnAl2O3(λ, 'o')
         
-        #compute the transfer matrices for the various interfaces and layers, one by one
-        T12 = make_T_int(λ, 1., n_LN, th, z_1)
-        T2  = make_T_lay(λ, n_LN, d_LN, th)
-        T23 = make_T_int(λ, n_LN, n_GaN, th, z_2)
-        T3  = make_T_lay(λ, n_GaN, d_GaN, th)
-        T34 = make_T_int(λ, n_GaN, n_Al2O3, th, z_3)
-        T4  = make_T_lay(λ, n_Al2O3, d_Al2O3, th)
-        T41 = make_T_int(λ, n_Al2O3, 1., th, z_4)
+    #compute the transfer matrices for the various interfaces and layers, one by one
+    T12 = make_T_int(λ, 1., n_LN, th, z_1)
+    T2  = make_T_lay(λ, n_LN, d_LN, th)
+    T23 = make_T_int(λ, n_LN, n_GaN, th, z_2)
+    T3  = make_T_lay(λ, n_GaN, d_GaN, th)
+    T34 = make_T_int(λ, n_GaN, n_Al2O3, th, z_3)
+    T4  = make_T_lay(λ, n_Al2O3, d_Al2O3, th)
+    T41 = make_T_int(λ, n_Al2O3, 1., th, z_4)
         
-        Tinc.append(T_inc(λ, np.dot(np.dot(np.dot(np.dot(np.dot(T12,T2),T23),T3),T34),T4), T41, n_Al2O3, d_Al2O3, th))
-        
-    return np.array(Tinc)
+    temp = np.einsum('iak,ajk->ijk',T12,T2)
+    temp = np.einsum('iak,ajk->ijk',temp,T23)
+    temp = np.einsum('iak,ajk->ijk',temp,T3)
+    temp = np.einsum('iak,ajk->ijk',temp,T34)
+    temp = np.einsum('iak,ajk->ijk',temp,T4)
 
+    return T_inc(xdata, temp, T41, n_Al2O3, d_Al2O3, th) 
 
-#popt, pcov = curve_fit(func, xdata, ydata, p0 = [0.23, 0.0151])
-#popt
-
-popt = [0.23, 0.0151]
+popt, pcov = curve_fit(func, xdata, ydata, p0 = [0.23, 0.0151])
+popt
 
 fit = func(xdata, *popt)
 
@@ -94,45 +90,8 @@ plt.legend()
 plt.savefig('Transmission_7.1.pdf')
 plt.show()
 
-#d = np.array([xdata,fit]).T
-#np.savetxt('simLN_7.1.txt', d, fmt='%10.5f', newline='\n')
+d = np.array([xdata,fit]).T
+np.savetxt('simLN_7.1.txt', d, fmt='%10.5f', newline='\n')
 
-#chisquare(fit, ydata)
+chisquare(fit, ydata)
 
-print(xdata.shape)
-
-d_LN,z_3 =popt
-
-nreGaN = material_nk_fnGaN(xdata, 'o') 
-nreLN  = material_nk_fnLN(xdata, 'o')
-nimGaN = make_k(xdata, alpha0_GaN, E0_GaN, Eu_GaN) 
-nimLN  = make_k(xdata, alpha0_LN, E0_LN, Eu_LN)
-
-n_LN    = nreLN + 1j * nimLN   
-n_GaN   = nreGaN + 1j * nimGaN
-n_Al2O3 = material_nk_fnAl2O3(xdata, 'o')
-    
-#compute the transfer matrices for the various interfaces and layers, one by one
-T12 = make_T_int(xdata, 1., n_LN, th, z_1)
-T2  = make_T_lay(xdata, n_LN, d_LN, th)
-T23 = make_T_int(xdata, n_LN, n_GaN, th, z_2)
-T3  = make_T_lay(xdata, n_GaN, d_GaN, th)
-T34 = make_T_int(xdata, n_GaN, n_Al2O3, th, z_3)
-T4  = make_T_lay(xdata, n_Al2O3, d_Al2O3, th)
-T41 = make_T_int(xdata, n_Al2O3, 1., th, z_4)
-
-temp = np.einsum('iak,jak->ijk',T12,T2)
-temp = np.einsum('iak,jak->ijk',temp,T23)
-temp = np.einsum('iak,jak->ijk',temp,T3)
-temp = np.einsum('iak,jak->ijk',temp,T34)
-temp = np.einsum('iak,jak->ijk',temp,T4)
-
-
-        
-
-controllo = T_inc(xdata, temp, T41, n_Al2O3, d_Al2O3, th)
-print(xdata.shape, np.shape(controllo)) 
-
-plt.plot(xdata, ydata, 'k-', alpha=0.5, linewidth=0.8, label='Experimental data')
-plt.plot(xdata, controllo, 'r-')
-plt.show()
