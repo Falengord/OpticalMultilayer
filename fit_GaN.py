@@ -70,6 +70,7 @@ popt, pcov = curve_fit(func, xdata, ydata, p0 = [5.57, 0.015])
 
 popt
 pcov
+print(np.sqrt(np.diag(pcov)))
 
 fit = func(xdata, *popt)
 
