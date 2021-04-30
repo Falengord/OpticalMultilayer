@@ -6,6 +6,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 
 from fun import *
+%matplotlib qt
 
 π = np.pi
 
@@ -22,7 +23,7 @@ z_1 = 0.000#5
 z_3 = 0
 
 # list of layer thicknesses in micron
-d_Al2O3 = 500
+d_Al2O3 = 430
 
 #urbach energies, urbach zero energy and zero absorption coefficient
 Eu_GaN = 0.017 #in eV
@@ -33,16 +34,21 @@ alpha0_GaN = 5e3
 th = 0 * π/180
 
 #load the measurement datafile to compare it with the simulation
-x, y = np.loadtxt('Dati/n-GaN hi res detail 2.txt', delimiter='\t', unpack=True)
+x, y = np.loadtxt('Dati/n-GaN hi res detail.txt', delimiter='\t', unpack=True)
 
 xdata = x*1e-3  #in micron
 ydata = y*1e-2
 
 #execute the various operations for each wavelength
-def func(λ,d_GaN,z_2):
+def func(λ,d_GaN,z_2,a,b1,b2,c1,c2):
+ 
+ 	#GaN parameters of Sellmeier equation   
+    A = a                    #3.6
+    B = [b1,b2]              #1.75, 4.1
+    C = [c1,c2]              #0.256**2, 17.86**2   
     
     #compute the refractive indeces of the various materials
-    nreGaN = material_nk_fnGaN(λ, 'o') 
+    nreGaN = n_sellmeier(λ,A,B,C)
     nimGaN = make_k(λ, alpha0_GaN, E0_GaN, Eu_GaN) 
      
     n_GaN   = nreGaN + 1j * nimGaN
@@ -66,10 +72,10 @@ def func(λ,d_GaN,z_2):
 sns.set_theme()
 sns.set_style("darkgrid")
 
-popt, pcov = curve_fit(func, xdata, ydata, p0 = [5.57, 0.015])
+#fit
+popt, pcov = curve_fit(func, xdata, ydata, p0 = [5.56,0.015,3.6,1.75,4.1,0.256**2,17.86**2])                  
 
-popt
-pcov
+print(popt)
 print(np.sqrt(np.diag(pcov)))
 
 fit = func(xdata, *popt)
@@ -87,4 +93,4 @@ plt.show()
 d = np.array([xdata,fit]).T
 np.savetxt('simLN_GaN.txt', d, fmt='%10.5f', newline='\n')
 
-chisquare(fit, ydata)
+print(chisquare(fit, ydata))
