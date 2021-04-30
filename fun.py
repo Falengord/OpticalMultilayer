@@ -79,9 +79,13 @@ def material_nk_fnGaN(λ, ray):
     ref. Handbook of optical materials (refractiveindex.info)
     '''
       
-    A_ordinary      = 3.6   
-    B_ordinary      = [    1.75,      4.1]
-    C_ordinary      = [0.256**2, 17.86**2]
+    #A_ordinary      = 3.6   
+    #B_ordinary      = [    1.75,      4.1]
+    #C_ordinary      = [0.256**2, 17.86**2]
+
+    A_ordinary      = 8.12691889    
+    B_ordinary      = [ 0.1449595, -3.74622794]
+    C_ordinary      = [0.12531291, -0.03692769]
 
     A_extraordinary = 5.35
     B_extraordinary = [    5.08,    1.0055]
