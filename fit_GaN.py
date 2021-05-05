@@ -88,6 +88,6 @@ plt.savefig('Transmission_GaN.pdf')
 plt.show()
 
 d = np.array([xdata,fit]).T
-np.savetxt('simLN_GaN.txt', d, fmt='%10.5f', newline='\n')
+np.savetxt('sim_GaN.txt', d, fmt='%10.5f', newline='\n')
 
 print(chisquare(fit, ydata))
