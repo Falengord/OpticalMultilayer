@@ -70,7 +70,7 @@ sns.set_theme()
 sns.set_style("darkgrid")
 
 #fit
-popt, pcov = curve_fit(func, xdata, ydata, p0 = [5.56,3.56,0.015], maxfev=10000)                  
+popt, pcov = curve_fit(func, xdata, ydata, p0 = [5.57,3.56,0.015], maxfev=20000)                  
 
 print(popt)
 print(np.sqrt(np.diag(pcov)))
