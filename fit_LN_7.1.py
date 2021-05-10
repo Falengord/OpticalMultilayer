@@ -18,17 +18,19 @@ layer characteristics
 '''
 
 #roughness list in micron
-z_1 = 0
+z_1 = 0.00168   # AFM measurement
 z_2 = 0
+z_3 = 0.0155    # simulation GaN+sapphire
 z_4 = 0
 
 #list of layer thicknesses in micron
-d_GaN   = 5.57
+d_LN    = 0.25     # profilometer
+d_GaN   = 5.5678   # simulation GaN+sapphire
 d_Al2O3 = 500
 
 #urbach energies, urbach zero energy and zero absorption coefficient
-Eu_GaN = 0.017 #in eV
-E0_GaN = 3.56  #in eV
+Eu_GaN = 0.017   #in eV
+E0_GaN = 3.5438  #in eV - simulation GaN+sapphire
 alpha0_GaN = 5e3
 
 Eu_LN = 0.150  #in eV
@@ -46,11 +48,15 @@ ydata = y*1e-2
 
 
 #execute the various operations for each wavelength
-def func(λ,d_LN,z_3):
+def func(λ,a,b1,b2,c1,c2):
+
+    A = a                       #1
+    B = [b1,b2,12.614]          #2.6734,1.2290,12.614
+    C = [c1,c2,474.60]          #0.01764,0.05914,474.60
     
     #compute the refractive indeces of the various materials
     nreGaN = material_nk_fnGaN(λ, 'o') 
-    nreLN  = material_nk_fnLN(λ, 'o')
+    nreLN  = n_sellmeier(λ,A,B,C)
     nimGaN = make_k(λ, alpha0_GaN, E0_GaN, Eu_GaN) 
     nimLN  = make_k(λ, alpha0_LN, E0_LN, Eu_LN)
     
@@ -76,13 +82,11 @@ def func(λ,d_LN,z_3):
     return T_inc(xdata, temp, T41, n_Al2O3, d_Al2O3, th) 
 
 
-
 #### Set seaborn ####
 sns.set_theme()
 sns.set_style("darkgrid")
 
-
-popt, pcov = curve_fit(func, xdata, ydata, p0 = [0.23, 0.0151])
+popt, pcov = curve_fit(func, xdata, ydata, p0 = [1,2.6734,1.2290,0.01764,0.05914], maxfev = 5000)
 popt
 
 fit = func(xdata, *popt)
@@ -98,6 +102,6 @@ plt.savefig('Transmission_7.1.pdf')
 plt.show()
 
 d = np.array([xdata,fit]).T
-np.savetxt('simLN_7.1.txt', d, fmt='%10.5f', newline='\n')
+np.savetxt('fitLN_7.1.txt', d, fmt='%10.5f', newline='\n')
 
 chisquare(fit, ydata)
